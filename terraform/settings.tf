@@ -10,11 +10,9 @@ terraform {
     storage_account_name = "tfstatefilejas"        # Replace with your actual storage account name
     container_name       = "tfstate"                  # Replace with your actual container name
     key                  = "terraform.tfstate"        # Keep the key as is or modify as needed
-    use_oidc             = true
   }
 }
 provider "azurerm" {
-  use_oidc = true
   features {}
   subscription_id = "0bbdd6e4-6685-4fe8-b409-d406ed91b2ed"
 }
