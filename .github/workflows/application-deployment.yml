@@ -55,15 +55,12 @@ jobs:
       run: |
         az aks get-credentials --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} --name ${{ secrets.AZURE_AKS_CLUSTER_NAME }}
 
-    # Step 8: Deploy with Helm
-    - name: Deploy with Helm
-      uses: azure/helm@v1
-      with:
-        namespace: default
-        release: movieapp
-        chart-path: movie-app/helm-charts
-        override-values: |
-          backend.image.repository=${{ secrets.ACR_LOGIN_SERVER }}/backend
-          backend.image.tag=latest
-          frontend.image.repository=${{ secrets.ACR_LOGIN_SERVER }}/frontend
-          frontend.image.tag=latest
+    # Step 8: Deploy with Helm CLI
+    - name: Deploy with Helm CLI
+      run: |
+        helm upgrade --install movieapp movie-app/helm-charts \
+          --namespace default \
+          --set backend.image.repository=${{ secrets.ACR_LOGIN_SERVER }}/backend \
+          --set backend.image.tag=latest \
+          --set frontend.image.repository=${{ secrets.ACR_LOGIN_SERVER }}/frontend \
+          --set frontend.image.tag=latest
