@@ -1,0 +1,22 @@
+{{- if .Values.seed.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: mongodb-seed-job
+  labels:
+    app: mongodb-seed-job
+spec:
+  backoffLimit: 4
+  template:
+    metadata:
+      labels:
+        app: mongodb-seed-job
+    spec:
+      containers:
+        - name: seed-db
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          env:
+            - name: MONGO_URI
+              value: "{{ .Values.seed.mongoUri }}"
+      restartPolicy: OnFailure
+{{- end }}

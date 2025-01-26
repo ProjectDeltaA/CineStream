@@ -50,6 +50,13 @@ jobs:
       run: |
         docker build -t ${{ secrets.ACR_LOGIN_SERVER }}/mongodb:latest movie-app/mongodb
         docker push ${{ secrets.ACR_LOGIN_SERVER }}/mongodb:latest
+    
+        # Step 6: Build and Push Frontend Image
+    - name: Seeding of Data
+      run: |
+        docker build -t ${{ secrets.ACR_LOGIN_SERVER }}/seed:latest movie-app/seed
+        docker push ${{ secrets.ACR_LOGIN_SERVER }}/seed:latest
+
 
     # Step 7: Configure kubectl for AKS
     - name: Set up kubectl
@@ -64,9 +71,26 @@ jobs:
     # Step 8: Deploy with Helm CLI
     - name: Deploy with Helm CLI
       run: |
-        helm upgrade --install movieapp movie-app/helm-charts \
-          --namespace default \
-          --set backend.image.repository=${{ secrets.ACR_LOGIN_SERVER }}/backend \
-          --set backend.image.tag=latest \
-          --set frontend.image.repository=${{ secrets.ACR_LOGIN_SERVER }}/frontend \
-          --set frontend.image.tag=latest
+          - name: Deploy Backend, Frontend, MongoDB, and Ingress with Helm
+            helm upgrade --install backend helm-charts/backend \
+              --namespace default \
+              --create-namespace \
+              --set image.repository=${{ secrets.ACR_LOGIN_SERVER }}/backend \
+              --set image.tag=latest
+
+            # Deploy the Frontend Helm chart
+            helm upgrade --install frontend helm-charts/frontend \
+              --namespace default \
+              --set image.repository=${{ secrets.ACR_LOGIN_SERVER }}/frontend \
+              --set image.tag=latest
+
+            # Deploy the MongoDB Helm chart (with seed job enabled)
+            helm upgrade --install mongodb helm-charts/mongodb \
+              --namespace default \
+              --set seed.enabled=true \
+              --set seed.image.repository=${{ secrets.ACR_LOGIN_SERVER }}/seed \
+              --set seed.image.tag=latest
+
+            # Deploy the Ingress Helm chart
+            helm upgrade --install ingress helm-charts/ingress \
+              --namespace default

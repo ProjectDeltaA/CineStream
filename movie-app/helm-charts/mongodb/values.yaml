@@ -3,10 +3,17 @@ image:
   repository: mongo
   tag: latest
   pullPolicy: IfNotPresent
+
 service:
   type: ClusterIP
   port: 27017
+
 resources: {}
 nodeSelector: {}
 tolerations: []
 affinity: {}
+
+# Configuration for seed job
+seed:
+  enabled: true
+  mongoUri: "mongodb://{{ .Release.Name }}-mongodb:27017"
