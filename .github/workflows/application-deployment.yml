@@ -8,6 +8,10 @@ on:
        - .github/workflows/application-deployment.yml
        - movie-app/**
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build-and-deploy:
     name: Build, Push, and Deploy with Helm
