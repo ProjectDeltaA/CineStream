@@ -1,21 +1,12 @@
 name: infra
 
 on:
-  workflow_dispatch:
-    inputs:
-      tf-extra-args:
-        type: string
-        default: ""
-        description: Extra args for terraform
   push:
-    tags: ["v*"]
     branches:
       - main
-    
-
-permissions:
-  contents: read
-  id-token: write
+    paths:
+      - "terraform/**"
+      - .github/workflows/terraform.yaml
 
 jobs:
   k8s-infra:
@@ -24,7 +15,6 @@ jobs:
       ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
       ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
       ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
-      ARM_USE_OIDC: true
     steps:
       - uses: actions/checkout@v4
       - uses: hashicorp/setup-terraform@v3
@@ -38,7 +28,6 @@ jobs:
           ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
           ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
           ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
-          ARM_USE_OIDC: true
       - name: Terraform Plan
         id: plan
         run: terraform plan
@@ -47,4 +36,3 @@ jobs:
           ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
           ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
           ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
-          ARM_USE_OIDC: true

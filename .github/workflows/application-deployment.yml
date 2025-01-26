@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - main
+    paths:
+      - "movie-app/**"
+      - .github/workflows/application-deployment.yaml
 
 jobs:
   build-and-deploy:
