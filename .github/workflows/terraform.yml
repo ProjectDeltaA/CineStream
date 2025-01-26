@@ -5,6 +5,11 @@ on:
       - main
     paths:
       - terraform/**
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+  
 jobs:
   terraform:
     name: Terraform Infra Creation
