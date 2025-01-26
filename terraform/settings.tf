@@ -4,5 +4,6 @@ terraform {
     storage_account_name = "tfstatefilejas"        # Replace with your actual storage account name
     container_name       = "tfstate"                  # Replace with your actual container name
     key                  = "terraform.tfstate"        # Keep the key as is or modify as needed
+    use_oidc = true
   }
 }
