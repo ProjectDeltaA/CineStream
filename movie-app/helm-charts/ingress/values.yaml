@@ -1,0 +1,2 @@
+host: movieapp.example.com
+tlsSecret: movieapp-tls

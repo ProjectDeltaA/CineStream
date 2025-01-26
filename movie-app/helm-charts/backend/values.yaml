@@ -1,0 +1,14 @@
+replicaCount: 2
+image:
+  repository: backend
+  tag: latest
+  pullPolicy: IfNotPresent
+service:
+  type: ClusterIP
+  port: 5000
+resources: {}
+nodeSelector: {}
+tolerations: []
+affinity: {}
+env:
+  MONGO_URI: mongodb://mongodb:27017/movieApp
