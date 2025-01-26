@@ -61,7 +61,7 @@ jobs:
       with:
         namespace: default
         release: movieapp
-        chart-path: ./helm-charts
+        chart-path: movie-app/helm-charts
         override-values: |
           backend.image.repository=${{ secrets.ACR_LOGIN_SERVER }}/backend
           backend.image.tag=latest
