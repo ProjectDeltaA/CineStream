@@ -75,7 +75,6 @@ jobs:
     # Step 8: Deploy with Helm CLI
     - name: Deploy with Helm CLI
       run: |
-          - name: Deploy Backend, Frontend, MongoDB, and Ingress with Helm
             helm upgrade --install backend helm-charts/backend \
               --namespace default \
               --create-namespace \
