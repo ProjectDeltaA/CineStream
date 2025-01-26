@@ -22,9 +22,7 @@ jobs:
     - name: Log in to Azure
       uses: azure/login@v1
       with:
-        client-id: ${{ secrets.ARM_CLIENT_ID }}
-        client-secret: ${{ secrets.ARM_CLIENT_SECRET }}
-        tenant-id: ${{ secrets.ARM_TENANT_ID }}
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
 
     # Step 3: Set up Docker Buildx
     - name: Set up Docker Buildx
