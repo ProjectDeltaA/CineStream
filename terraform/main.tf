@@ -7,6 +7,14 @@ resource "azurerm_resource_group" "rg" {
   location = "East US"
 }
 
+resource "azurerm_container_registry" "acr" {
+  name                = "movieappacr"
+  resource_group_name = azurerm_resource_group.rg.name
+  location            = azurerm_resource_group.rg.location
+  sku                 = "Basic"
+  admin_enabled       = true
+}
+
 resource "azurerm_kubernetes_cluster" "aks" {
   name                = "movieApp-aks"
   location            = azurerm_resource_group.rg.location
@@ -14,7 +22,7 @@ resource "azurerm_kubernetes_cluster" "aks" {
   dns_prefix          = "movieapp"
 
   identity {
-    type = "UserAssigned"
+    type = "SystemAssigned"
   }
 
   default_node_pool {
@@ -31,6 +39,6 @@ resource "azurerm_kubernetes_cluster" "aks" {
   }
 }
 
-output "kubeconfig" {
-  value = azurerm_kubernetes_cluster.aks.kube_config_raw
+output "acr_login_server" {
+  value = azurerm_container_registry.acr.login_server
 }
