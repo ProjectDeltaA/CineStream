@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Chart.Name }}
+  labels:
+    app: {{ .Chart.Name }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Chart.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Chart.Name }}
+      annotations:
+        prometheus.io/scrape: {{ .Values.prometheus.scrape | quote }}
+        prometheus.io/path: "/metrics"
+        prometheus.io/port: "8080"
+    spec:
+      imagePullSecrets:
+        - name: regcred # Use this only if pulling from a private Docker registry
+      containers:
+        - name: app
+          image: "{{ .Values.image.appRepository }}:{{ .Values.image.appTag }}"
+          imagePullPolicy: {{ .Values.image.imagePullPolicy | default "IfNotPresent" }}
+          ports:
+            - containerPort: 8080
+          env:
+            - name: MONGO_HOST
+              value: {{ .Values.mongo.host }}
+        - name: db
+          image: "{{ .Values.image.dbRepository }}:{{ .Values.image.dbTag }}"
+          ports:
+            - containerPort: 27017

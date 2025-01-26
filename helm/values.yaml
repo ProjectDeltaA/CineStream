@@ -1,0 +1,38 @@
+# Replica settings
+replicaCount: 2
+
+# Image configuration
+image:
+  appRepository: app-image
+  appTag: latest
+  dbRepository: mongo
+  dbTag: 5.0
+  imagePullPolicy: IfNotPresent
+
+# Service configuration
+service:
+  type: NodePort # Change to ClusterIP if you don’t want external access
+  appPort: 8080
+  dbPort: 27017
+
+# NodePort (Optional for external access)
+nodePort: 30080 # Specific NodePort for the app service
+
+# MongoDB configuration
+mongo:
+  host: db
+
+# Prometheus settings
+prometheus:
+  scrape: true
+
+# Ingress configuration
+ingress:
+  enabled: false # Set to true to enable ingress
+  host: movie-app.local
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+  tls: # Optional, for HTTPS support
+    - secretName: movie-app-tls
+      hosts:
+        - movie-app.local
