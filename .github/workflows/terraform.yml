@@ -5,7 +5,7 @@ on:
       - main
 jobs:
   terraform:
-    name: Terraform Apply
+    name: Terraform Infra Creation
     runs-on: ubuntu-latest
 
     steps:
