@@ -1,5 +1,5 @@
 FROM node:16
-WORKDIR /src
+WORKDIR /frintend
 COPY package*.json ./
 RUN npm install
 COPY . .
