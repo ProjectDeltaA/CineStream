@@ -1,4 +1,6 @@
-ata:
+apiVersion: apps/v1
+kind: Deployment
+metadata:
   name: {{ .Release.Name }}-backend
 spec:
   replicas: {{ .Values.replicaCount }}
