@@ -36,14 +36,20 @@ jobs:
     # Step 5: Build and Push Backend Image
     - name: Build and Push Backend Image
       run: |
-        docker build -t ${{ secrets.ACR_LOGIN_SERVER }}/backend:latest ./backend
+        docker build -t ${{ secrets.ACR_LOGIN_SERVER }}/backend:latest movie-app/backend
         docker push ${{ secrets.ACR_LOGIN_SERVER }}/backend:latest
 
     # Step 6: Build and Push Frontend Image
     - name: Build and Push Frontend Image
       run: |
-        docker build -t ${{ secrets.ACR_LOGIN_SERVER }}/frontend:latest ./frontend
+        docker build -t ${{ secrets.ACR_LOGIN_SERVER }}/frontend:latest movie-app/frontend
         docker push ${{ secrets.ACR_LOGIN_SERVER }}/frontend:latest
+    
+    # Step 6: Build and Push Frontend Image
+    - name: Build and Push Mongodb image Image
+      run: |
+        docker build -t ${{ secrets.ACR_LOGIN_SERVER }}/mongodb:latest movie-app/mongodb
+        docker push ${{ secrets.ACR_LOGIN_SERVER }}/mongodb:latest
 
     # Step 7: Configure kubectl for AKS
     - name: Set up kubectl
