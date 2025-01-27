@@ -1,7 +1,7 @@
 # Movie App
 
 This is a full-stack movie application using MongoDB, a Python backend (Flask), and a React frontend.
-
+TEST
 ## Features
 
 - Backend provides RESTful APIs for managing movies.
