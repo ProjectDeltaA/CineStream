@@ -53,3 +53,8 @@ jobs:
       - name: Get Argo CD Admin Password
         run: |
           kubectl get secret argocd-initial-admin-secret -n argocd -o jsonpath="{.data.password}" | base64 -d
+
+      # Step 8: Apply Argo CD Application Manifest
+      - name: Apply Argo CD Application Manifest
+        run: |
+          kubectl apply -f argocd/application.yaml -n argocd
