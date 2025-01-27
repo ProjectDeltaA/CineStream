@@ -1,13 +1,22 @@
-name: Install Argo CD
+name: Terraform Deployment and Argo CD Installation
 
 on:
   push:
     branches:
       - main
+    paths:
+      - terraform/**
+      - .github/workflows/terraform.yml
+
+
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  install-argocd:
-    name: Install Argo CD
+  terraform:
+    name: Terraform Infra Creation
     runs-on: ubuntu-latest
 
     steps:
@@ -15,40 +24,38 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-      # Step 2: Log in to Azure
-      - name: Azure Login
-        uses: azure/login@v1
+      # Step 2: Setup Terraform
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
         with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          terraform_version: 1.4.6
 
-      # Step 3: Set up kubectl
-      - name: Set up kubectl
-        uses: azure/setup-kubectl@v3
-        with:
-          version: 'v1.27.1'
+      # Step 3: Terraform Init
+      - name: Terraform Init
+        run: terraform init
+        working-directory: terraform
+        env:
+          ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+          ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+          ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
 
-      # Step 4: Configure Kubernetes Cluster Access
-      - name: Configure Kubernetes Cluster Access
-        run: |
-          az aks get-credentials --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} --name ${{ secrets.AZURE_AKS_CLUSTER_NAME }}
+      # Step 4: Terraform Plan
+      - name: Terraform Plan
+        run: terraform plan
+        working-directory: terraform
+        env:
+          ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+          ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+          ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
 
-      # Step 5: Install Argo CD
-      - name: Install Argo CD
-        run: |
-          kubectl create namespace argocd || true
-          kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
-
-      # Step 6: Expose Argo CD Server
-      - name: Expose Argo CD Server
-        run: |
-          kubectl patch svc argocd-server -n argocd -p '{"spec": {"type": "LoadBalancer"}}'
-
-      # Step 7: Wait for Argo CD to be Ready
-      - name: Wait for Argo CD to be Ready
-        run: |
-          kubectl wait --for=condition=available --timeout=600s deployment/argocd-server -n argocd
-
-      # Step 8: Get Initial Admin Password
-      - name: Get Argo CD Admin Password
-        run: |
-          kubectl get secret argocd-initial-admin-secret -n argocd -o jsonpath="{.data.password}" | base64 -d
+      # Step 5: Terraform Apply
+      - name: Terraform Apply
+        run: terraform apply -auto-approve
+        working-directory: terraform
+        env:
+          ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+          ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+          ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}

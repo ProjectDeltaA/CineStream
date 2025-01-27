@@ -1,0 +1,55 @@
+name: Install Argo CD
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/argocd.yml
+jobs:
+  install-argocd:
+    name: Install Argo CD
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout Repository
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # Step 2: Log in to Azure
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      # Step 3: Set up kubectl
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'v1.27.1'
+
+      # Step 4: Configure Kubernetes Cluster Access
+      - name: Configure Kubernetes Cluster Access
+        run: |
+          az aks get-credentials --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} --name ${{ secrets.AZURE_AKS_CLUSTER_NAME }}
+
+      # Step 5: Install Argo CD
+      - name: Install Argo CD
+        run: |
+          kubectl create namespace argocd || true
+          kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+
+      # Step 6: Expose Argo CD Server
+      - name: Expose Argo CD Server
+        run: |
+          kubectl patch svc argocd-server -n argocd -p '{"spec": {"type": "LoadBalancer"}}'
+
+      # Step 7: Wait for Argo CD to be Ready
+      - name: Wait for Argo CD to be Ready
+        run: |
+          kubectl wait --for=condition=available --timeout=300s argocd/application.yaml -n argocd
+
+      # Step 8: Get Initial Admin Password
+      - name: Get Argo CD Admin Password
+        run: |
+          kubectl get secret argocd-initial-admin-secret -n argocd -o jsonpath="{.data.password}" | base64 -d
