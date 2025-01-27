@@ -1,4 +1,5 @@
-name: Terraform Deployment
+name: Terraform Deployment and Argo CD Installation
+
 on:
   push:
     branches:
@@ -9,22 +10,24 @@ on:
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
-  
+
 jobs:
-  terraform-and-argocd:
-    name: Terraform Infra + Argo CD Setup
+  terraform:
+    name: Terraform Infra Creation
     runs-on: ubuntu-latest
 
     steps:
-      # --- Existing Terraform Steps ---
+      # Step 1: Checkout Repository
       - name: Checkout Repository
         uses: actions/checkout@v3
 
+      # Step 2: Setup Terraform
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: 1.4.6
 
+      # Step 3: Terraform Init
       - name: Terraform Init
         run: terraform init
         working-directory: terraform
@@ -34,6 +37,7 @@ jobs:
           ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
           ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
 
+      # Step 4: Terraform Plan
       - name: Terraform Plan
         run: terraform plan
         working-directory: terraform
@@ -43,6 +47,7 @@ jobs:
           ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
           ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
 
+      # Step 5: Terraform Apply
       - name: Terraform Apply
         run: terraform apply -auto-approve
         working-directory: terraform
@@ -52,35 +57,44 @@ jobs:
           ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
           ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
 
-      # --- New Steps to Install Argo CD ---
-      - name: Install Azure CLI
-        run: |
-          curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+  install-argocd:
+    name: Install Argo CD
+    runs-on: ubuntu-latest
+    needs: terraform
 
-      - name: Login to Azure
-        run: |
-          az login --service-principal \
-            -u ${{ secrets.ARM_CLIENT_ID }} \
-            -p ${{ secrets.ARM_CLIENT_SECRET }} \
-            --tenant ${{ secrets.ARM_TENANT_ID }}
+    steps:
+      # Step 1: Checkout Repository
+      - name: Checkout Repository
+        uses: actions/checkout@v3
 
-      - name: Fetch AKS Credentials
-        run: |
-          # Replace with your Terraform output variables for cluster name/resource group
-          RESOURCE_GROUP=$(terraform -chdir=terraform output -raw aks_resource_group)
-          CLUSTER_NAME=$(terraform -chdir=terraform output -raw aks_cluster_name)
-          az aks get-credentials \
-            --resource-group $RESOURCE_GROUP \
-            --name $CLUSTER_NAME \
-            --overwrite-existing
+      # Step 2: Setup Kubectl
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'v1.27.1'
 
+      # Step 3: Configure Access to Kubernetes Cluster
+      - name: Configure Kubernetes Cluster Access
+        run: |
+          az aks get-credentials --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} --name ${{ secrets.AZURE_AKS_CLUSTER_NAME }}
+
+      # Step 4: Install Argo CD
       - name: Install Argo CD
         run: |
-          kubectl create namespace argocd
+          kubectl create namespace argocd || true
           kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
-      - name: Deploy Argo CD Applications
-        run: |
-          kubectl apply -f argocd/application.yaml -n argocd
-      - name: Expose Argo CD UI
+
+      # Step 5: Expose Argo CD Server
+      - name: Expose Argo CD Server
         run: |
           kubectl patch svc argocd-server -n argocd -p '{"spec": {"type": "LoadBalancer"}}'
+
+      # Step 6: Wait for Argo CD to be Ready
+      - name: Wait for Argo CD to be Ready
+        run: |
+          kubectl wait --for=condition=available --timeout=600s deployment/argocd-server -n argocd
+
+      # Step 7: Get Initial Admin Password
+      - name: Get Argo CD Admin Password
+        run: |
+          kubectl get secret argocd-initial-admin-secret -n argocd -o jsonpath="{.data.password}" | base64 -d
