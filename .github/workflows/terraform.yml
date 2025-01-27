@@ -11,11 +11,12 @@ concurrency:
   cancel-in-progress: true
   
 jobs:
-  terraform:
-    name: Terraform Infra Creation
+  terraform-and-argocd:
+    name: Terraform Infra + Argo CD Setup
     runs-on: ubuntu-latest
 
     steps:
+      # --- Existing Terraform Steps ---
       - name: Checkout Repository
         uses: actions/checkout@v3
 
@@ -50,3 +51,36 @@ jobs:
           ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
           ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
           ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+
+      # --- New Steps to Install Argo CD ---
+      - name: Install Azure CLI
+        run: |
+          curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+
+      - name: Login to Azure
+        run: |
+          az login --service-principal \
+            -u ${{ secrets.ARM_CLIENT_ID }} \
+            -p ${{ secrets.ARM_CLIENT_SECRET }} \
+            --tenant ${{ secrets.ARM_TENANT_ID }}
+
+      - name: Fetch AKS Credentials
+        run: |
+          # Replace with your Terraform output variables for cluster name/resource group
+          RESOURCE_GROUP=$(terraform -chdir=terraform output -raw aks_resource_group)
+          CLUSTER_NAME=$(terraform -chdir=terraform output -raw aks_cluster_name)
+          az aks get-credentials \
+            --resource-group $RESOURCE_GROUP \
+            --name $CLUSTER_NAME \
+            --overwrite-existing
+
+      - name: Install Argo CD
+        run: |
+          kubectl create namespace argocd
+          kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+      - name: Deploy Argo CD Applications
+        run: |
+          kubectl apply -f argocd/application.yaml -n argocd
+      - name: Expose Argo CD UI
+        run: |
+          kubectl patch svc argocd-server -n argocd -p '{"spec": {"type": "LoadBalancer"}}'

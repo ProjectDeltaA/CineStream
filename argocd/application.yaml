@@ -1,18 +1,49 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: movie-app
+  name: backend
   namespace: argocd
 spec:
   project: default
   source:
-    repoURL: git@github.com:your-repo/movie-app.git
-    targetRevision: HEAD
-    path: helm-charts
+    repoURL: https://github.com/ProjectDeltaA/CineStream.git  # Your Git repo
+    targetRevision: HEAD  # Branch/tag
+    path: ./movie-app/helm-charts/backend  # Path to the backend Helm chart
+    helm:
+      # Optional: Override Helm values (inline or from a values file)
+      values: |
+        replicaCount: 2
+        image:
+          tag: latest
+      # OR reference a values file in your repo:
+      valueFiles:
+        - values/production.yaml
   destination:
-    server: https://kubernetes.default.svc
-    namespace: default
+    server: https://kubernetes.default.svc  # Target cluster
+    namespace: backend  # Namespace to deploy into
   syncPolicy:
     automated:
+      selfHeal: true
       prune: true
+# argocd/application.yaml (additional entries)
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: frontend
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/ProjectDeltaA/CineStream.git
+    targetRevision: HEAD
+    path: ./movie-app/helm-charts/backend
+    helm:
+      valueFiles:
+        - values/production.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: frontend
+  syncPolicy:
+    automated:
       selfHeal: true
