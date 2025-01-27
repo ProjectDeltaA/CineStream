@@ -73,30 +73,28 @@ jobs:
         az aks get-credentials --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} --name ${{ secrets.AZURE_AKS_CLUSTER_NAME }}
 
     # Step 8: Deploy with Helm CLI
-    - name: Set Working Directory
-      run: cd $GITHUB_WORKSPACE/movie-app
-      
+
     - name: Deploy with Helm CLI
       run: |
-            helm upgrade --install backend helm-charts/backend \
+            helm upgrade --install backend movie-app/helm-charts/backend \
               --namespace default \
               --create-namespace \
               --set image.repository=${{ secrets.ACR_LOGIN_SERVER }}/backend \
               --set image.tag=latest
 
             # Deploy the Frontend Helm chart
-            helm upgrade --install frontend helm-charts/frontend \
+            helm upgrade --install frontend movie-app/helm-charts/frontend \
               --namespace default \
               --set image.repository=${{ secrets.ACR_LOGIN_SERVER }}/frontend \
               --set image.tag=latest
 
             # Deploy the MongoDB Helm chart (with seed job enabled)
-            helm upgrade --install mongodb helm-charts/mongodb \
+            helm upgrade --install mongodb movie-app/helm-charts/mongodb \
               --namespace default \
               --set seed.enabled=true \
               --set seed.image.repository=${{ secrets.ACR_LOGIN_SERVER }}/seed \
               --set seed.image.tag=latest
 
             # Deploy the Ingress Helm chart
-            helm upgrade --install ingress helm-charts/ingress \
+            helm upgrade --install ingress movie-app/helm-charts/ingress \
               --namespace default
