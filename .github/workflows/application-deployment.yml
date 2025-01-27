@@ -73,6 +73,9 @@ jobs:
         az aks get-credentials --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} --name ${{ secrets.AZURE_AKS_CLUSTER_NAME }}
 
     # Step 8: Deploy with Helm CLI
+    - name: Set Working Directory
+      run: cd $GITHUB_WORKSPACE/movie-app
+      
     - name: Deploy with Helm CLI
       run: |
             helm upgrade --install backend helm-charts/backend \
