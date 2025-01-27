@@ -6,6 +6,9 @@ on:
       - main
     paths:
       - terraform/**
+      - .github/workflows/terraform.yml
+
+
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
